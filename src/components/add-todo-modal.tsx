@@ -29,33 +29,33 @@ export default function AddTodoModal({ open, onClose, onAdd }: AddTodoModalProps
 
   return (
     <Modal open={open} onClose={onClose}>
-      <Box 
+      <Box
         className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 p-6 rounded-lg shadow-lg"
         sx={{
-          backgroundColor: isDarkMode ? '#1e1e1e' : 'white',
+          backgroundColor: isDarkMode ? "#1e1e1e" : "white",
         }}
       >
         <form onSubmit={handleSubmit(onSubmit)}>
           <Stack spacing={2}>
-            <TextField 
-              fullWidth 
-              label="할 일" 
+            <TextField
+              fullWidth
+              label="할 일"
               {...register("title", { required: true })}
               className={isDarkMode ? "text-white" : ""}
               InputLabelProps={{
-                className: isDarkMode ? "text-gray-400" : ""
+                className: isDarkMode ? "text-gray-400" : "",
               }}
               sx={{
-                '& .MuiOutlinedInput-root': {
-                  backgroundColor: isDarkMode ? '#2d2d2d' : 'white',
-                  '& fieldset': {
-                    borderColor: isDarkMode ? 'rgba(255, 255, 255, 0.23)' : 'rgba(0, 0, 0, 0.23)',
+                "& .MuiOutlinedInput-root": {
+                  backgroundColor: isDarkMode ? "#2d2d2d" : "white",
+                  "& fieldset": {
+                    borderColor: isDarkMode ? "rgba(255, 255, 255, 0.23)" : "rgba(0, 0, 0, 0.23)",
                   },
-                  '&:hover fieldset': {
-                    borderColor: isDarkMode ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.5)',
+                  "&:hover fieldset": {
+                    borderColor: isDarkMode ? "rgba(255, 255, 255, 0.5)" : "rgba(0, 0, 0, 0.5)",
                   },
-                  '&.Mui-focused fieldset': {
-                    borderColor: isDarkMode ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.5)',
+                  "&.Mui-focused fieldset": {
+                    borderColor: isDarkMode ? "rgba(255, 255, 255, 0.5)" : "rgba(0, 0, 0, 0.5)",
                   },
                 },
               }}
@@ -68,21 +68,21 @@ export default function AddTodoModal({ open, onClose, onAdd }: AddTodoModalProps
               {...register("description")}
               className={isDarkMode ? "text-white" : ""}
               sx={{
-                '& .MuiOutlinedInput-root': {
-                  backgroundColor: isDarkMode ? '#2d2d2d' : 'white',
-                  '& fieldset': {
-                    borderColor: isDarkMode ? 'rgba(255, 255, 255, 0.23)' : 'rgba(0, 0, 0, 0.23)',
+                "& .MuiOutlinedInput-root": {
+                  backgroundColor: isDarkMode ? "#2d2d2d" : "white",
+                  "& fieldset": {
+                    borderColor: isDarkMode ? "rgba(255, 255, 255, 0.23)" : "rgba(0, 0, 0, 0.23)",
                   },
-                  '&:hover fieldset': {
-                    borderColor: isDarkMode ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.5)',
+                  "&:hover fieldset": {
+                    borderColor: isDarkMode ? "rgba(255, 255, 255, 0.5)" : "rgba(0, 0, 0, 0.5)",
                   },
-                  '&.Mui-focused fieldset': {
-                    borderColor: isDarkMode ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.5)',
+                  "&.Mui-focused fieldset": {
+                    borderColor: isDarkMode ? "rgba(255, 255, 255, 0.5)" : "rgba(0, 0, 0, 0.5)",
                   },
                 },
               }}
             />
-            <div className="flex justify-end space-x-2">
+            <div className="flex justify-end gap-2">
               <Button onClick={onClose} variant="outlined">
                 취소
               </Button>

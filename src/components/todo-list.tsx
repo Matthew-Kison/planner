@@ -4,7 +4,20 @@ import { useAuthStore } from "@/store/auth-store";
 import { useThemeStore } from "@/store/theme-store";
 import { useTodoStore } from "@/store/todo-store";
 import { Add as AddIcon, Delete as DeleteIcon, ExpandMore as ExpandMoreIcon } from "@mui/icons-material";
-import { Accordion, AccordionDetails, AccordionSummary, Box, Button, Checkbox, IconButton, List, ListItem, ListItemText, Typography } from "@mui/material";
+import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
+  Box,
+  Button,
+  Checkbox,
+  IconButton,
+  List,
+  ListItem,
+  ListItemText,
+  Tooltip,
+  Typography,
+} from "@mui/material";
 import { differenceInDays, differenceInHours, differenceInMinutes } from "date-fns";
 import { useEffect, useRef, useState } from "react";
 import { useDrag, useDrop } from "react-dnd";
@@ -64,17 +77,17 @@ function TodoItem({ todo, onToggle, onEdit, onDelete, onMove }: TodoItemProps) {
   drag(drop(ref));
 
   const handleItemClick = (e: React.MouseEvent) => {
-    if (
-      (e.target as HTMLElement).closest('.MuiCheckbox-root') ||
-      (e.target as HTMLElement).closest('.MuiIconButton-root')
-    ) {
+    if ((e.target as HTMLElement).closest(".MuiCheckbox-root") || (e.target as HTMLElement).closest(".MuiIconButton-root")) {
       return;
     }
     onEdit(todo.id);
   };
 
   return (
-    <div ref={ref} className={`group transition-all duration-200 ${isDragging ? "opacity-50" : ""} ${isDarkMode ? "hover:bg-gray-800" : "hover:bg-gray-50"}`}>
+    <div
+      ref={ref}
+      className={`group transition-all duration-200 ${isDragging ? "opacity-50" : ""} ${isDarkMode ? "hover:bg-gray-800" : "hover:bg-gray-50"}`}
+    >
       <ListItem
         onClick={handleItemClick}
         className={isDarkMode ? "hover:text-gray-100" : "hover:text-gray-900"}
@@ -92,10 +105,13 @@ function TodoItem({ todo, onToggle, onEdit, onDelete, onMove }: TodoItemProps) {
           </div>
         }
       >
-        <div className="flex items-start">
+        <div className="flex items-center gap-2">
           <Checkbox
-            edge="start"
             checked={todo.completed}
+            sx={{
+              width: "20px",
+              height: "20px",
+            }}
             onChange={(e) => {
               e.stopPropagation();
               onToggle(todo.id);
@@ -104,17 +120,14 @@ function TodoItem({ todo, onToggle, onEdit, onDelete, onMove }: TodoItemProps) {
           <div className="flex-1">
             <ListItemText
               primary={
-                <div className="flex justify-between items-center gap-2">
-                  <span className={`${todo.completed ? "line-through text-gray-500" : ""} font-medium`}>{todo.title}</span>
+                <div className="flex items-center gap-2">
+                  <Tooltip title={todo.description} placement="right">
+                    <span className={`${todo.completed ? "line-through text-gray-500" : ""} font-semibold`}>{todo.title}</span>
+                  </Tooltip>
                   <span className="text-sm text-gray-500">{getRelativeTime(todo.created_at)}</span>
                 </div>
               }
             />
-            {todo.description && (
-              <div className="h-0 group-hover:h-auto overflow-hidden transition-all duration-200">
-                <span className={`${isDarkMode ? "text-gray-400" : "text-gray-500"} mt-2 block`}>{todo.description}</span>
-              </div>
-            )}
           </div>
         </div>
       </ListItem>
@@ -194,17 +207,14 @@ export default function TodoList() {
       {error && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4">
           <span className="block sm:inline">{error}</span>
-          <button
-            className="absolute top-0 bottom-0 right-0 px-4 py-3"
-            onClick={() => setError(null)}
-          >
+          <button className="absolute top-0 bottom-0 right-0 px-4 py-3" onClick={() => setError(null)}>
             <span className="sr-only">닫기</span>
             <span className="text-xl">&times;</span>
           </button>
         </div>
       )}
-      
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+
+      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
         <Typography variant="h5" component="h2" className={isDarkMode ? "text-white" : ""}>
           오늘의 할 일
         </Typography>
@@ -213,10 +223,10 @@ export default function TodoList() {
           startIcon={<AddIcon />}
           onClick={() => setIsAddModalOpen(true)}
           sx={{
-            backgroundColor: '#1976d2',
-            color: 'white',
-            '&:hover': {
-              backgroundColor: '#1565c0',
+            backgroundColor: "#1976d2",
+            color: "white",
+            "&:hover": {
+              backgroundColor: "#1565c0",
             },
           }}
         >
@@ -251,27 +261,12 @@ export default function TodoList() {
       </Accordion>
 
       {editingTodo && (
-        <EditTodoModal
-          open={true}
-          onClose={() => setEditingTodo(null)}
-          todo={todos.find((t) => t.id === editingTodo)!}
-          onEdit={handleEdit}
-        />
+        <EditTodoModal open={true} onClose={() => setEditingTodo(null)} todo={todos.find((t) => t.id === editingTodo)!} onEdit={handleEdit} />
       )}
 
-      {deletingTodo && (
-        <DeleteConfirmDialog
-          open={true}
-          onClose={() => setDeletingTodo(null)}
-          onConfirm={() => handleDelete(deletingTodo)}
-        />
-      )}
+      {deletingTodo && <DeleteConfirmDialog open={true} onClose={() => setDeletingTodo(null)} onConfirm={() => handleDelete(deletingTodo)} />}
 
-      <AddTodoModal
-        open={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
-        onAdd={handleAdd}
-      />
+      <AddTodoModal open={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} onAdd={handleAdd} />
     </div>
   );
 }
