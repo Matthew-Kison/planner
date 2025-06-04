@@ -20,11 +20,15 @@ export const useAuthStore = create<AuthStore>((set) => ({
   signUp: async (email: string, password: string) => {
     set({ isLoading: true, error: null });
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
       });
       if (error) throw error;
+
+      if (data.session) {
+        set({ user: data.session.user });
+      }
     } catch (error) {
       set({ error: (error as Error).message });
     } finally {
@@ -35,11 +39,18 @@ export const useAuthStore = create<AuthStore>((set) => ({
   signIn: async (email: string, password: string) => {
     set({ isLoading: true, error: null });
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
       if (error) throw error;
+
+      if (data.session) {
+        set({ user: data.session.user });
+      } else {
+        const { data: sessionData } = await supabase.auth.getSession();
+        set({ user: sessionData.session?.user ?? null });
+      }
     } catch (error) {
       set({ error: (error as Error).message });
     } finally {
@@ -63,7 +74,10 @@ export const useAuthStore = create<AuthStore>((set) => ({
   getSession: async () => {
     set({ isLoading: true, error: null });
     try {
-      const { data: { session }, error } = await supabase.auth.getSession();
+      const {
+        data: { session },
+        error,
+      } = await supabase.auth.getSession();
       if (error) throw error;
       set({ user: session?.user ?? null });
     } catch (error) {
@@ -72,4 +86,4 @@ export const useAuthStore = create<AuthStore>((set) => ({
       set({ isLoading: false });
     }
   },
-})); 
+}));
