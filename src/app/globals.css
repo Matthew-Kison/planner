@@ -1,0 +1,10 @@
+@import "tailwindcss";
+
+:root {
+  --header-height: 64px;
+  --sidebar-width: 240px;
+}
+
+#root {
+  @apply h-screen;
+}

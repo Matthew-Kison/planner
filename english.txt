@@ -1,0 +1,29 @@
+Q: 나는 tailwindcss를 쓸때 두요소의 세로 gap을 줄때 flex, flex-col gap-4 이런식으로 주는데, mui를 쓸때 두 요소의 gap을 주고싸을때 가장 best practice가 뭐야?
+A: What is the best practice for adding vertical gap between two elements when using MUI? I usually use flex, flex-col gap-4 with Tailwind CSS, but what's the recommended way with MUI?
+
+Q: 너 근데 내가 cursorrules에 법칙을 만들어놨는데 수행하지 않는 이유가 뭐야?
+A: Why aren't you following the rules I set in cursorrules?
+
+Q: 시간관련해서는 dayjs나..뭐 다른 좋은거 있나?
+A: Are there any good libraries for handling dates and times, like dayjs or others?
+
+Q: 이전에 한 질문들 다 번역해놔
+A: Please translate all the previous questions into English.
+
+Q: 현재 수정하면 item의 순서가 바뀌는데 원인이 뭐야?
+A: Why does the item order change when editing? What's the cause?
+
+Q: 수정해줘.
+A: Please fix it.
+
+Q: todo를 등록할때, 등록한 시간을 저장해놓고 리스트에서 몇일, 몇시간, 몇분, 1분이하 전에 등록한 시간인지 보여주면 좋겠어.
+A: When registering a todo, it would be nice to save the registration time and show in the list how long ago it was registered (in days, hours, minutes, or less than a minute).
+
+Q: 59분까지는 **분 전 이라고 표기, 23시간 59분까지는 **시간 전 으로 표기, **일전은 그이후 모든 것.
+A: Show "** minutes ago" up to 59 minutes, "** hours ago" up to 23 hours and 59 minutes, and "** days ago" for everything after that.
+
+Q: 아니; 내가 한 질문있잖아. 그거를 그냥 영어로 번역한것만 남기면돼.
+A: No; I asked a question earlier. Just keep the English translation of that.
+
+Q: cursorrules가 .cursorrules가 아니야?
+A: Isn't it .cursorrules instead of cursorrules?

@@ -1,0 +1,13 @@
+{
+  "fileNaming": {
+    "pattern": "kebab-case",
+    "extension": ".tsx"
+  },
+  "englishLearning": {
+    "recordQuestions": {
+      "file": "english.txt",
+      "format": "Q: [한국어 질문]\nA: [영어 번역]",
+      "description": "사용자가 한국어로 질문할 때마다, 질문과 영어 번역을 english.txt 파일에 기록합니다."
+    }
+  }
+} 
