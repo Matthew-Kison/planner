@@ -1,4 +1,3 @@
-import { useTodoStore } from "@/store/todo-store";
 import { Modal, Box, TextField, Button, Stack } from "@mui/material";
 import { useForm } from "react-hook-form";
 import { useThemeStore } from "@/store/theme-store";
@@ -6,6 +5,7 @@ import { useThemeStore } from "@/store/theme-store";
 interface AddTodoModalProps {
   open: boolean;
   onClose: () => void;
+  onAdd: (title: string, description?: string) => Promise<void>;
 }
 
 interface TodoFormData {
@@ -13,15 +13,18 @@ interface TodoFormData {
   description?: string;
 }
 
-export default function AddTodoModal({ open, onClose }: AddTodoModalProps) {
-  const { addTodo } = useTodoStore();
+export default function AddTodoModal({ open, onClose, onAdd }: AddTodoModalProps) {
   const { isDarkMode } = useThemeStore();
   const { register, handleSubmit, reset } = useForm<TodoFormData>();
 
-  const onSubmit = (data: TodoFormData) => {
-    addTodo(data.title, data.description);
-    reset();
-    onClose();
+  const onSubmit = async (data: TodoFormData) => {
+    try {
+      await onAdd(data.title, data.description);
+      reset();
+      onClose();
+    } catch (error) {
+      console.error("Error adding todo:", error);
+    }
   };
 
   return (
@@ -79,11 +82,11 @@ export default function AddTodoModal({ open, onClose }: AddTodoModalProps) {
                 },
               }}
             />
-            <div className="flex justify-end gap-2">
-              <Button variant="outlined" onClick={onClose} className={isDarkMode ? "text-gray-300 border-gray-600 hover:bg-gray-800" : ""}>
+            <div className="flex justify-end space-x-2">
+              <Button onClick={onClose} variant="outlined">
                 취소
               </Button>
-              <Button type="submit" variant="contained" className={isDarkMode ? "bg-blue-600 hover:bg-blue-700" : ""}>
+              <Button type="submit" variant="contained">
                 추가
               </Button>
             </div>

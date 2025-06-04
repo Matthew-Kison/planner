@@ -27,3 +27,18 @@ A: No; I asked a question earlier. Just keep the English translation of that.
 
 Q: cursorrules가 .cursorrules가 아니야?
 A: Isn't it .cursorrules instead of cursorrules?
+
+Q: add modal에는 잘 적용됐는데, edit에는 적용안됐어. 적용해줘. todo list의 item hover 상태에도 적용잘 해주고
+A: The dark mode is well applied to the add modal, but not to the edit modal. Please apply it. Also, please apply it properly to the hover state of todo list items.
+
+Q: .cursorrules 를 보면 내가 지시한게 있는데 왜 안해?
+A: I see the instructions in .cursorrules, why aren't you following them?
+
+Q: 현재 이거 todo 리스트 관리를 zustand store로 하고 있는데, 그러면은 여러 디바이스에서 사용할 수 가 없잖아??? 그래서 supabase로 api를 만들어서 사용하면 어떨까 싶은데
+A: Currently, we're managing the todo list with Zustand store, which means it can't be used across multiple devices. What do you think about creating an API with Supabase to solve this?
+
+Q: 권한이슈가 발생해. 이거 회원 개념이 있어야 동작할것같은데
+A: There's a permission issue. It seems we need user authentication for this to work.
+
+Q: 로그인 페이지에서는 header, sidebar 가 보이지 않아야할것같아.
+A: The header and sidebar should not be visible on the login page.

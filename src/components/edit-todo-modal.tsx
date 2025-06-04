@@ -1,14 +1,15 @@
 "use client";
 
-import { useTodoStore, Todo } from "@/store/todo-store";
-import { Modal, Box, TextField, Button, Stack } from "@mui/material";
-import { useForm } from "react-hook-form";
 import { useThemeStore } from "@/store/theme-store";
+import { Todo } from "@/store/todo-store";
+import { Box, Button, Modal, Stack, TextField } from "@mui/material";
+import { useForm } from "react-hook-form";
 
 interface EditTodoModalProps {
   open: boolean;
   onClose: () => void;
   todo: Todo;
+  onEdit: (id: string, title: string, description?: string) => Promise<void>;
 }
 
 interface TodoFormData {
@@ -16,8 +17,7 @@ interface TodoFormData {
   description?: string;
 }
 
-export default function EditTodoModal({ open, onClose, todo }: EditTodoModalProps) {
-  const { updateTodo } = useTodoStore();
+export default function EditTodoModal({ open, onClose, todo, onEdit }: EditTodoModalProps) {
   const { isDarkMode } = useThemeStore();
   const { register, handleSubmit, reset } = useForm<TodoFormData>({
     defaultValues: {
@@ -26,10 +26,14 @@ export default function EditTodoModal({ open, onClose, todo }: EditTodoModalProp
     },
   });
 
-  const onSubmit = (data: TodoFormData) => {
-    updateTodo(todo.id, data.title, data.description);
-    reset();
-    onClose();
+  const onSubmit = async (data: TodoFormData) => {
+    try {
+      await onEdit(todo.id, data.title, data.description);
+      reset();
+      onClose();
+    } catch (error) {
+      console.error("Error updating todo:", error);
+    }
   };
 
   return (
@@ -87,14 +91,14 @@ export default function EditTodoModal({ open, onClose, todo }: EditTodoModalProp
                 },
               }}
             />
-            <Stack direction="row" spacing={1} justifyContent="flex-end">
-              <Button variant="outlined" onClick={onClose} className={isDarkMode ? "text-gray-300 border-gray-600 hover:bg-gray-800" : ""}>
+            <div className="flex justify-end space-x-2">
+              <Button onClick={onClose} variant="outlined">
                 취소
               </Button>
-              <Button type="submit" variant="contained" className={isDarkMode ? "bg-blue-600 hover:bg-blue-700" : ""}>
-                수정
+              <Button type="submit" variant="contained">
+                저장
               </Button>
-            </Stack>
+            </div>
           </Stack>
         </form>
       </Box>

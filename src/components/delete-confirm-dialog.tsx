@@ -6,15 +6,14 @@ interface DeleteConfirmDialogProps {
   open: boolean;
   onClose: () => void;
   onConfirm: () => void;
-  title: string;
 }
 
-export default function DeleteConfirmDialog({ open, onClose, onConfirm, title }: DeleteConfirmDialogProps) {
+export default function DeleteConfirmDialog({ open, onClose, onConfirm }: DeleteConfirmDialogProps) {
   return (
     <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
       <DialogTitle>할 일 삭제</DialogTitle>
       <DialogContent>
-        <Typography>"{title}" 할 일을 삭제하시겠습니까?</Typography>
+        <Typography>삭제하시겠습니까?</Typography>
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose} color="primary">

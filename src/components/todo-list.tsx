@@ -1,14 +1,16 @@
 "use client";
 
+import { useAuthStore } from "@/store/auth-store";
+import { useThemeStore } from "@/store/theme-store";
 import { useTodoStore } from "@/store/todo-store";
-import { Delete as DeleteIcon, ExpandMore as ExpandMoreIcon } from "@mui/icons-material";
-import { Accordion, AccordionDetails, AccordionSummary, Checkbox, IconButton, List, ListItem, ListItemText, Typography } from "@mui/material";
-import { useRef, useState } from "react";
+import { Add as AddIcon, Delete as DeleteIcon, ExpandMore as ExpandMoreIcon } from "@mui/icons-material";
+import { Accordion, AccordionDetails, AccordionSummary, Box, Button, Checkbox, IconButton, List, ListItem, ListItemText, Typography } from "@mui/material";
+import { differenceInDays, differenceInHours, differenceInMinutes } from "date-fns";
+import { useEffect, useRef, useState } from "react";
 import { useDrag, useDrop } from "react-dnd";
+import AddTodoModal from "./add-todo-modal";
 import DeleteConfirmDialog from "./delete-confirm-dialog";
 import EditTodoModal from "./edit-todo-modal";
-import { differenceInMinutes, differenceInHours, differenceInDays } from "date-fns";
-import { useThemeStore } from "@/store/theme-store";
 
 interface TodoItemProps {
   todo: {
@@ -16,7 +18,8 @@ interface TodoItemProps {
     title: string;
     description?: string;
     completed: boolean;
-    createdAt: string;
+    created_at: string;
+    user_id: string;
   };
   onToggle: (id: string) => void;
   onEdit: (id: string) => void;
@@ -60,13 +63,23 @@ function TodoItem({ todo, onToggle, onEdit, onDelete, onMove }: TodoItemProps) {
 
   drag(drop(ref));
 
+  const handleItemClick = (e: React.MouseEvent) => {
+    if (
+      (e.target as HTMLElement).closest('.MuiCheckbox-root') ||
+      (e.target as HTMLElement).closest('.MuiIconButton-root')
+    ) {
+      return;
+    }
+    onEdit(todo.id);
+  };
+
   return (
     <div ref={ref} className={`group transition-all duration-200 ${isDragging ? "opacity-50" : ""} ${isDarkMode ? "hover:bg-gray-800" : "hover:bg-gray-50"}`}>
       <ListItem
-        onClick={() => onEdit(todo.id)}
+        onClick={handleItemClick}
         className={isDarkMode ? "hover:text-gray-100" : "hover:text-gray-900"}
         secondaryAction={
-          <div className="flex items-center space-x-2" onClick={(e) => e.stopPropagation()}>
+          <div className="flex items-center space-x-2">
             <IconButton
               edge="end"
               onClick={(e) => {
@@ -93,7 +106,7 @@ function TodoItem({ todo, onToggle, onEdit, onDelete, onMove }: TodoItemProps) {
               primary={
                 <div className="flex justify-between items-center gap-2">
                   <span className={`${todo.completed ? "line-through text-gray-500" : ""} font-medium`}>{todo.title}</span>
-                  <span className="text-sm text-gray-500">{getRelativeTime(todo.createdAt)}</span>
+                  <span className="text-sm text-gray-500">{getRelativeTime(todo.created_at)}</span>
                 </div>
               }
             />
@@ -110,9 +123,19 @@ function TodoItem({ todo, onToggle, onEdit, onDelete, onMove }: TodoItemProps) {
 }
 
 export default function TodoList() {
-  const { todos, toggleTodo, removeTodo, reorderTodos } = useTodoStore();
+  const { todos, toggleTodo, deleteTodo, reorderTodos, fetchTodos, isLoading, addTodo, updateTodo } = useTodoStore();
+  const { isDarkMode } = useThemeStore();
+  const { user } = useAuthStore();
   const [editingTodo, setEditingTodo] = useState<string | null>(null);
   const [deletingTodo, setDeletingTodo] = useState<string | null>(null);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (user) {
+      fetchTodos();
+    }
+  }, [user, fetchTodos]);
 
   const planTodos = todos.filter((todo) => !todo.completed);
   const doneTodos = todos.filter((todo) => todo.completed);
@@ -123,8 +146,84 @@ export default function TodoList() {
     reorderTodos(dragIndex, hoverIndex);
   };
 
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteTodo(id);
+      setDeletingTodo(null);
+    } catch (error) {
+      setError("할 일을 삭제하는 중 오류가 발생했습니다.");
+      console.error(error);
+    }
+  };
+
+  const handleToggle = async (id: string) => {
+    try {
+      await toggleTodo(id);
+    } catch (error) {
+      setError("할 일 상태를 변경하는 중 오류가 발생했습니다.");
+      console.error(error);
+    }
+  };
+
+  const handleEdit = async (id: string, title: string, description?: string) => {
+    try {
+      await updateTodo(id, title, description);
+      setEditingTodo(null);
+    } catch (error) {
+      setError("할 일을 수정하는 중 오류가 발생했습니다.");
+      console.error(error);
+    }
+  };
+
+  const handleAdd = async (title: string, description?: string) => {
+    try {
+      await addTodo(title, description);
+      setIsAddModalOpen(false);
+    } catch (error) {
+      setError("할 일을 추가하는 중 오류가 발생했습니다.");
+      console.error(error);
+    }
+  };
+
+  if (isLoading) {
+    return <div className="flex justify-center items-center h-64">Loading...</div>;
+  }
+
   return (
     <div className="space-y-4">
+      {error && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4">
+          <span className="block sm:inline">{error}</span>
+          <button
+            className="absolute top-0 bottom-0 right-0 px-4 py-3"
+            onClick={() => setError(null)}
+          >
+            <span className="sr-only">닫기</span>
+            <span className="text-xl">&times;</span>
+          </button>
+        </div>
+      )}
+      
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+        <Typography variant="h5" component="h2" className={isDarkMode ? "text-white" : ""}>
+          오늘의 할 일
+        </Typography>
+        <Button
+          variant="contained"
+          startIcon={<AddIcon />}
+          onClick={() => setIsAddModalOpen(true)}
+          sx={{
+            backgroundColor: '#1976d2',
+            color: 'white',
+            '&:hover': {
+              backgroundColor: '#1565c0',
+            },
+          }}
+        >
+          추가
+        </Button>
+      </Box>
+
       <Accordion defaultExpanded>
         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
           <Typography>Plan ({planTodos.length})</Typography>
@@ -132,7 +231,7 @@ export default function TodoList() {
         <AccordionDetails>
           <List>
             {planTodos.map((todo) => (
-              <TodoItem key={todo.id} todo={todo} onToggle={toggleTodo} onEdit={setEditingTodo} onDelete={setDeletingTodo} onMove={moveTodo} />
+              <TodoItem key={todo.id} todo={todo} onToggle={handleToggle} onEdit={setEditingTodo} onDelete={setDeletingTodo} onMove={moveTodo} />
             ))}
           </List>
         </AccordionDetails>
@@ -145,25 +244,34 @@ export default function TodoList() {
         <AccordionDetails>
           <List>
             {doneTodos.map((todo) => (
-              <TodoItem key={todo.id} todo={todo} onToggle={toggleTodo} onEdit={setEditingTodo} onDelete={setDeletingTodo} onMove={moveTodo} />
+              <TodoItem key={todo.id} todo={todo} onToggle={handleToggle} onEdit={setEditingTodo} onDelete={setDeletingTodo} onMove={moveTodo} />
             ))}
           </List>
         </AccordionDetails>
       </Accordion>
 
-      {editingTodo && <EditTodoModal open={true} onClose={() => setEditingTodo(null)} todo={todos.find((t) => t.id === editingTodo)!} />}
+      {editingTodo && (
+        <EditTodoModal
+          open={true}
+          onClose={() => setEditingTodo(null)}
+          todo={todos.find((t) => t.id === editingTodo)!}
+          onEdit={handleEdit}
+        />
+      )}
 
       {deletingTodo && (
         <DeleteConfirmDialog
           open={true}
           onClose={() => setDeletingTodo(null)}
-          onConfirm={() => {
-            removeTodo(deletingTodo);
-            setDeletingTodo(null);
-          }}
-          title={todos.find((t) => t.id === deletingTodo)?.title || ""}
+          onConfirm={() => handleDelete(deletingTodo)}
         />
       )}
+
+      <AddTodoModal
+        open={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        onAdd={handleAdd}
+      />
     </div>
   );
 }
