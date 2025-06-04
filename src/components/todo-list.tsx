@@ -8,6 +8,7 @@ import { useDrag, useDrop } from "react-dnd";
 import DeleteConfirmDialog from "./delete-confirm-dialog";
 import EditTodoModal from "./edit-todo-modal";
 import { differenceInMinutes, differenceInHours, differenceInDays } from "date-fns";
+import { useThemeStore } from "@/store/theme-store";
 
 interface TodoItemProps {
   todo: {
@@ -25,6 +26,7 @@ interface TodoItemProps {
 
 function TodoItem({ todo, onToggle, onEdit, onDelete, onMove }: TodoItemProps) {
   const ref = useRef<HTMLDivElement>(null);
+  const { isDarkMode } = useThemeStore();
 
   const getRelativeTime = (dateString: string) => {
     const date = new Date(dateString);
@@ -59,9 +61,10 @@ function TodoItem({ todo, onToggle, onEdit, onDelete, onMove }: TodoItemProps) {
   drag(drop(ref));
 
   return (
-    <div ref={ref} className={`group hover:bg-gray-50 transition-all duration-200 ${isDragging ? "opacity-50" : ""}`}>
+    <div ref={ref} className={`group transition-all duration-200 ${isDragging ? "opacity-50" : ""} ${isDarkMode ? "hover:bg-gray-800" : "hover:bg-gray-50"}`}>
       <ListItem
         onClick={() => onEdit(todo.id)}
+        className={isDarkMode ? "hover:text-gray-100" : "hover:text-gray-900"}
         secondaryAction={
           <div className="flex items-center space-x-2" onClick={(e) => e.stopPropagation()}>
             <IconButton
@@ -96,7 +99,7 @@ function TodoItem({ todo, onToggle, onEdit, onDelete, onMove }: TodoItemProps) {
             />
             {todo.description && (
               <div className="h-0 group-hover:h-auto overflow-hidden transition-all duration-200">
-                <span className="text-gray-500 mt-2 block">{todo.description}</span>
+                <span className={`${isDarkMode ? "text-gray-400" : "text-gray-500"} mt-2 block`}>{todo.description}</span>
               </div>
             )}
           </div>
