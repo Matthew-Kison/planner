@@ -2,8 +2,9 @@
 
 import { useThemeStore } from "@/store/theme-store";
 import { Todo } from "@/store/todo-store";
-import { Box, Button, Modal, Stack, TextField } from "@mui/material";
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Stack } from "@mui/material";
 import { useForm } from "react-hook-form";
+import { useRef } from "react";
 
 interface EditTodoModalProps {
   open: boolean;
@@ -25,7 +26,13 @@ export default function EditTodoModal({ open, onClose, todo, onEdit }: EditTodoM
       description: todo.description,
     },
   });
+  const inputRef = useRef<HTMLInputElement>(null);
 
+  const handleClose = () => {
+    reset();
+    onClose();
+  };
+  
   const onSubmit = async (data: TodoFormData) => {
     try {
       await onEdit(todo.id, data.title, data.description);
@@ -37,20 +44,35 @@ export default function EditTodoModal({ open, onClose, todo, onEdit }: EditTodoM
   };
 
   return (
-    <Modal open={open} onClose={onClose}>
-      <Box
-        className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 p-6 rounded-lg shadow-lg"
-        sx={{
-          backgroundColor: isDarkMode ? "#1e1e1e" : "white",
-        }}
-      >
+    <Dialog 
+    open={open} 
+    onClose={handleClose}
+    slotProps={{
+      backdrop: {
+        onTransitionEnd: () => {
+          inputRef.current?.focus();
+        }
+      }
+    }}
+    sx={{
+      "& .MuiDialog-paper": {
+        width: "100%",
+        maxWidth: "400px",
+      },
+    }}
+  >
+      <DialogTitle style={{ color: isDarkMode ? "white" : "inherit" }}>
+        할 일 수정
+      </DialogTitle>
+      <DialogContent>
         <form onSubmit={handleSubmit(onSubmit)}>
-          <Stack spacing={2}>
+          <Stack spacing={2} sx={{ mt: 1 }}>
             <TextField
               fullWidth
               label="할 일"
               {...register("title", { required: true })}
               className={isDarkMode ? "text-white" : ""}
+              inputRef={inputRef}
               InputLabelProps={{
                 className: isDarkMode ? "text-gray-400" : "",
               }}
@@ -91,17 +113,17 @@ export default function EditTodoModal({ open, onClose, todo, onEdit }: EditTodoM
                 },
               }}
             />
-            <div className="flex justify-end gap-2">
-              <Button onClick={onClose} variant="outlined">
-                취소
-              </Button>
-              <Button type="submit" variant="contained">
-                저장
-              </Button>
-            </div>
           </Stack>
         </form>
-      </Box>
-    </Modal>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose} variant="outlined">
+          취소
+        </Button>
+        <Button onClick={handleSubmit(onSubmit)} variant="contained">
+          저장
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
 }

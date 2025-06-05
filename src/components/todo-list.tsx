@@ -215,8 +215,8 @@ export default function TodoList() {
       )}
 
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
-        <Typography variant="h5" component="h2" className={isDarkMode ? "text-white" : ""}>
-          오늘의 할 일
+        <Typography variant="h4" component="div" className={isDarkMode ? "text-white" : ""}>
+          Todo List
         </Typography>
         <Button
           variant="contained"
@@ -236,7 +236,7 @@ export default function TodoList() {
 
       <Accordion defaultExpanded>
         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-          <Typography>Plan ({planTodos.length})</Typography>
+          <Typography variant="h5" fontWeight={600} className="text-gray-400">Planned ({planTodos.length})</Typography>
         </AccordionSummary>
         <AccordionDetails>
           <List>
@@ -249,7 +249,7 @@ export default function TodoList() {
 
       <Accordion defaultExpanded>
         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-          <Typography>Done ({doneTodos.length})</Typography>
+          <Typography variant="h5" fontWeight={600} className="text-green-500">Done ({doneTodos.length})</Typography>
         </AccordionSummary>
         <AccordionDetails>
           <List>
