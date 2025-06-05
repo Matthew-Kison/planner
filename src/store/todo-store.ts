@@ -144,6 +144,10 @@ export const useTodoStore = create<TodoStore>((set, get) => ({
     const { user } = useAuthStore.getState();
     if (!user) return;
 
+    // 원래 상태에서 todo를 찾음
+    const originalTodo = get().todos.find((t) => t.id === id);
+    if (!originalTodo) return;
+
     // Optimistic update
     set((state) => ({
       todos: state.todos.map((todo) =>
@@ -152,12 +156,10 @@ export const useTodoStore = create<TodoStore>((set, get) => ({
     }));
 
     try {
-      const todo = get().todos.find((t) => t.id === id);
-      if (!todo) return;
-
+      // 서버에 보낼 때는 원래 상태의 반전된 값을 사용
       const { error } = await supabase
         .from("todos")
-        .update({ completed: !todo.completed })
+        .update({ completed: !originalTodo.completed })
         .eq("id", id)
         .eq("user_id", user.id);
 

@@ -67,7 +67,7 @@ function TodoItem({ todo, onToggle, onEdit, onDelete, onMove }: TodoItemProps) {
 
   const [, drop] = useDrop({
     accept: "TODO",
-    hover: (item: { id: string }) => {
+    drop: (item: { id: string }) => {
       if (item.id !== todo.id) {
         onMove(item.id, todo.id);
       }
