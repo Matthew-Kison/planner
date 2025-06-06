@@ -1,16 +1,23 @@
 "use client";
 
 import { useThemeStore } from "@/store/theme-store";
-import { Todo } from "@/store/todo-store";
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Stack } from "@mui/material";
+import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Stack, TextField } from "@mui/material";
+import { useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
-import { useRef } from "react";
 
 interface EditTodoModalProps {
   open: boolean;
   onClose: () => void;
-  todo: Todo;
-  onEdit: (id: string, title: string, description?: string) => Promise<void>;
+  todo: {
+    id: string;
+    title: string;
+    description?: string;
+    completed: boolean;
+    created_at: string;
+    user_id: string;
+  };
+  onEdit: (id: string, title: string, description?: string) => void;
+  isCopying?: boolean;
 }
 
 interface TodoFormData {
@@ -18,21 +25,26 @@ interface TodoFormData {
   description?: string;
 }
 
-export default function EditTodoModal({ open, onClose, todo, onEdit }: EditTodoModalProps) {
+export default function EditTodoModal({ open, onClose, todo, onEdit, isCopying = false }: EditTodoModalProps) {
   const { isDarkMode } = useThemeStore();
-  const { register, handleSubmit, reset } = useForm<TodoFormData>({
+  const { register, handleSubmit, reset, setValue } = useForm<TodoFormData>({
     defaultValues: {
       title: todo.title,
-      description: todo.description,
+      description: todo.description || "",
     },
   });
   const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setValue("title", todo.title);
+    setValue("description", todo.description || "");
+  }, [todo, setValue]);
 
   const handleClose = () => {
     reset();
     onClose();
   };
-  
+
   const onSubmit = async (data: TodoFormData) => {
     try {
       await onEdit(todo.id, data.title, data.description);
@@ -44,28 +56,26 @@ export default function EditTodoModal({ open, onClose, todo, onEdit }: EditTodoM
   };
 
   return (
-    <Dialog 
-    open={open} 
-    onClose={handleClose}
-    slotProps={{
-      backdrop: {
-        onTransitionEnd: () => {
-          inputRef.current?.focus();
-        }
-      }
-    }}
-    sx={{
-      "& .MuiDialog-paper": {
-        width: "100%",
-        maxWidth: "400px",
-      },
-    }}
-  >
-      <DialogTitle style={{ color: isDarkMode ? "white" : "inherit" }}>
-        할 일 수정
-      </DialogTitle>
-      <DialogContent>
-        <form onSubmit={handleSubmit(onSubmit)}>
+    <Dialog
+      open={open}
+      onClose={handleClose}
+      slotProps={{
+        backdrop: {
+          onTransitionEnd: () => {
+            inputRef.current?.focus();
+          },
+        },
+      }}
+      sx={{
+        "& .MuiDialog-paper": {
+          width: "100%",
+          maxWidth: "400px",
+        },
+      }}
+    >
+      <DialogTitle style={{ color: isDarkMode ? "white" : "inherit" }}>{isCopying ? "할 일 복사" : "할 일 수정"}</DialogTitle>
+      <form onSubmit={handleSubmit(onSubmit)}>
+        <DialogContent>
           <Stack spacing={2} sx={{ mt: 1 }}>
             <TextField
               fullWidth
@@ -114,16 +124,16 @@ export default function EditTodoModal({ open, onClose, todo, onEdit }: EditTodoM
               }}
             />
           </Stack>
-        </form>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose} variant="outlined">
-          취소
-        </Button>
-        <Button onClick={handleSubmit(onSubmit)} variant="contained">
-          저장
-        </Button>
-      </DialogActions>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={onClose} variant="outlined">
+            취소
+          </Button>
+          <Button type="submit" variant="contained">
+            {isCopying ? "복사하기" : "수정하기"}
+          </Button>
+        </DialogActions>
+      </form>
     </Dialog>
   );
 }

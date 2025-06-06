@@ -3,7 +3,7 @@
 import { useAuthStore } from "@/store/auth-store";
 import { useThemeStore } from "@/store/theme-store";
 import { useTodoStore } from "@/store/todo-store";
-import { Add as AddIcon, Delete as DeleteIcon, ExpandMore as ExpandMoreIcon } from "@mui/icons-material";
+import { Add as AddIcon, Delete as DeleteIcon, ExpandMore as ExpandMoreIcon, ContentCopy as CopyIcon } from "@mui/icons-material";
 import {
   Accordion,
   AccordionDetails,
@@ -38,9 +38,10 @@ interface TodoItemProps {
   onEdit: (id: string) => void;
   onDelete: (id: string) => void;
   onMove: (dragId: string, hoverId: string) => void;
+  onCopy: (todo: TodoItemProps["todo"]) => void;
 }
 
-function TodoItem({ todo, onToggle, onEdit, onDelete, onMove }: TodoItemProps) {
+function TodoItem({ todo, onToggle, onEdit, onDelete, onMove, onCopy }: TodoItemProps) {
   const ref = useRef<HTMLDivElement>(null);
   const { isDarkMode } = useThemeStore();
 
@@ -97,6 +98,15 @@ function TodoItem({ todo, onToggle, onEdit, onDelete, onMove }: TodoItemProps) {
               edge="end"
               onClick={(e) => {
                 e.stopPropagation();
+                onCopy(todo);
+              }}
+            >
+              <CopyIcon />
+            </IconButton>
+            <IconButton
+              edge="end"
+              onClick={(e) => {
+                e.stopPropagation();
                 onDelete(todo.id);
               }}
             >
@@ -143,6 +153,7 @@ export default function TodoList() {
   const [deletingTodo, setDeletingTodo] = useState<string | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [copyingTodo, setCopyingTodo] = useState<{ title: string; description?: string } | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -198,6 +209,23 @@ export default function TodoList() {
     }
   };
 
+  const handleCopy = async (todo: TodoItemProps["todo"]) => {
+    setCopyingTodo({
+      title: todo.title,
+      description: todo.description,
+    });
+  };
+
+  const handleCopyConfirm = async (title: string, description?: string) => {
+    try {
+      await addTodo(title, description);
+      setCopyingTodo(null);
+    } catch (error) {
+      setError("할 일을 복사하는 중 오류가 발생했습니다.");
+      console.error(error);
+    }
+  };
+
   if (isLoading) {
     return <div className="flex justify-center items-center h-64">Loading...</div>;
   }
@@ -236,12 +264,22 @@ export default function TodoList() {
 
       <Accordion defaultExpanded>
         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-          <Typography variant="h5" fontWeight={600} className="text-gray-400">Planned ({planTodos.length})</Typography>
+          <Typography variant="h5" fontWeight={600} className="text-gray-400">
+            Planned ({planTodos.length})
+          </Typography>
         </AccordionSummary>
         <AccordionDetails>
           <List>
             {planTodos.map((todo) => (
-              <TodoItem key={todo.id} todo={todo} onToggle={handleToggle} onEdit={setEditingTodo} onDelete={setDeletingTodo} onMove={moveTodo} />
+              <TodoItem
+                key={todo.id}
+                todo={todo}
+                onToggle={handleToggle}
+                onEdit={setEditingTodo}
+                onDelete={setDeletingTodo}
+                onMove={moveTodo}
+                onCopy={handleCopy}
+              />
             ))}
           </List>
         </AccordionDetails>
@@ -249,12 +287,22 @@ export default function TodoList() {
 
       <Accordion defaultExpanded>
         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-          <Typography variant="h5" fontWeight={600} className="text-green-500">Done ({doneTodos.length})</Typography>
+          <Typography variant="h5" fontWeight={600} className="text-green-500">
+            Done ({doneTodos.length})
+          </Typography>
         </AccordionSummary>
         <AccordionDetails>
           <List>
             {doneTodos.map((todo) => (
-              <TodoItem key={todo.id} todo={todo} onToggle={handleToggle} onEdit={setEditingTodo} onDelete={setDeletingTodo} onMove={moveTodo} />
+              <TodoItem
+                key={todo.id}
+                todo={todo}
+                onToggle={handleToggle}
+                onEdit={setEditingTodo}
+                onDelete={setDeletingTodo}
+                onMove={moveTodo}
+                onCopy={handleCopy}
+              />
             ))}
           </List>
         </AccordionDetails>
@@ -267,6 +315,23 @@ export default function TodoList() {
       {deletingTodo && <DeleteConfirmDialog open={true} onClose={() => setDeletingTodo(null)} onConfirm={() => handleDelete(deletingTodo)} />}
 
       <AddTodoModal open={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} onAdd={handleAdd} />
+
+      {copyingTodo && (
+        <EditTodoModal
+          open={true}
+          onClose={() => setCopyingTodo(null)}
+          todo={{
+            id: "",
+            title: copyingTodo.title,
+            description: copyingTodo.description,
+            completed: false,
+            created_at: new Date().toISOString(),
+            user_id: user?.id || "",
+          }}
+          onEdit={(_, title, description) => handleCopyConfirm(title, description)}
+          isCopying={true}
+        />
+      )}
     </div>
   );
 }
