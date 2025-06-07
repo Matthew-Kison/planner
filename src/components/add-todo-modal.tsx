@@ -1,23 +1,31 @@
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Stack } from "@mui/material";
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Stack, Autocomplete } from "@mui/material";
 import { useForm } from "react-hook-form";
 import { useThemeStore } from "@/store/theme-store";
-import { useRef } from "react";
+import { useCategoryStore } from "@/store/category-store";
+import { useEffect, useRef } from "react";
 
 interface AddTodoModalProps {
   open: boolean;
   onClose: () => void;
-  onAdd: (title: string, description?: string) => Promise<void>;
+  onAdd: (title: string, description?: string, category_id?: string) => void;
 }
 
 interface TodoFormData {
   title: string;
   description?: string;
+  category_id?: string;
 }
 
 export default function AddTodoModal({ open, onClose, onAdd }: AddTodoModalProps) {
   const { isDarkMode } = useThemeStore();
-  const { register, handleSubmit, reset } = useForm<TodoFormData>();
+  const { categories, fetchCategories } = useCategoryStore();
+  const { register, handleSubmit, reset, setValue, watch } = useForm<TodoFormData>();
   const inputRef = useRef<HTMLInputElement>(null);
+  const selectedCategoryId = watch("category_id");
+
+  useEffect(() => {
+    fetchCategories();
+  }, [fetchCategories]);
 
   const handleClose = () => {
     reset();
@@ -26,24 +34,24 @@ export default function AddTodoModal({ open, onClose, onAdd }: AddTodoModalProps
 
   const onSubmit = async (data: TodoFormData) => {
     try {
-      await onAdd(data.title, data.description);
+      await onAdd(data.title, data.description, data.category_id);
       reset();
-      handleClose();
+      onClose();
     } catch (error) {
       console.error("Error adding todo:", error);
     }
   };
 
   return (
-    <Dialog 
-      open={open} 
+    <Dialog
+      open={open}
       onClose={handleClose}
       slotProps={{
         backdrop: {
           onTransitionEnd: () => {
             inputRef.current?.focus();
-          }
-        }
+          },
+        },
       }}
       sx={{
         "& .MuiDialog-paper": {
@@ -52,11 +60,9 @@ export default function AddTodoModal({ open, onClose, onAdd }: AddTodoModalProps
         },
       }}
     >
-      <DialogTitle style={{ color: isDarkMode ? "white" : "inherit" }}>
-        할 일 추가
-      </DialogTitle>
-      <DialogContent>
-        <form onSubmit={handleSubmit(onSubmit)}>
+      <DialogTitle style={{ color: isDarkMode ? "white" : "inherit" }}>할 일 추가</DialogTitle>
+      <form onSubmit={handleSubmit(onSubmit)}>
+        <DialogContent>
           <Stack spacing={2} sx={{ mt: 1 }}>
             <TextField
               fullWidth
@@ -82,6 +88,38 @@ export default function AddTodoModal({ open, onClose, onAdd }: AddTodoModalProps
                 },
               }}
             />
+            <Autocomplete
+              options={categories}
+              getOptionLabel={(option) => option.name}
+              value={categories.find((cat) => cat.id === selectedCategoryId) || null}
+              onChange={(_, newValue) => {
+                setValue("category_id", newValue?.id);
+              }}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="카테고리"
+                  className={isDarkMode ? "text-white" : ""}
+                  InputLabelProps={{
+                    className: isDarkMode ? "text-gray-400" : "",
+                  }}
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      backgroundColor: isDarkMode ? "#2d2d2d" : "white",
+                      "& fieldset": {
+                        borderColor: isDarkMode ? "rgba(255, 255, 255, 0.23)" : "rgba(0, 0, 0, 0.23)",
+                      },
+                      "&:hover fieldset": {
+                        borderColor: isDarkMode ? "rgba(255, 255, 255, 0.5)" : "rgba(0, 0, 0, 0.5)",
+                      },
+                      "&.Mui-focused fieldset": {
+                        borderColor: isDarkMode ? "rgba(255, 255, 255, 0.5)" : "rgba(0, 0, 0, 0.5)",
+                      },
+                    },
+                  }}
+                />
+              )}
+            />
             <TextField
               fullWidth
               multiline
@@ -105,16 +143,16 @@ export default function AddTodoModal({ open, onClose, onAdd }: AddTodoModalProps
               }}
             />
           </Stack>
-        </form>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={handleClose} variant="outlined">
-          취소
-        </Button>
-        <Button onClick={handleSubmit(onSubmit)} variant="contained">
-          추가
-        </Button>
-      </DialogActions>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleClose} variant="outlined">
+            취소
+          </Button>
+          <Button type="submit" variant="contained">
+            추가
+          </Button>
+        </DialogActions>
+      </form>
     </Dialog>
   );
 }

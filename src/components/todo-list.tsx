@@ -33,6 +33,7 @@ interface TodoItemProps {
     completed: boolean;
     created_at: string;
     user_id: string;
+    category_id?: string;
   };
   onToggle: (id: string) => void;
   onEdit: (id: string) => void;
@@ -153,7 +154,7 @@ export default function TodoList() {
   const [deletingTodo, setDeletingTodo] = useState<string | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [copyingTodo, setCopyingTodo] = useState<{ title: string; description?: string } | null>(null);
+  const [copyingTodo, setCopyingTodo] = useState<{ title: string; description?: string; category_id?: string } | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -189,9 +190,9 @@ export default function TodoList() {
     }
   };
 
-  const handleEdit = async (id: string, title: string, description?: string) => {
+  const handleEdit = async (id: string, title: string, description?: string, category_id?: string) => {
     try {
-      await updateTodo(id, title, description);
+      await updateTodo(id, title, description, category_id);
       setEditingTodo(null);
     } catch (error) {
       setError("할 일을 수정하는 중 오류가 발생했습니다.");
@@ -199,9 +200,9 @@ export default function TodoList() {
     }
   };
 
-  const handleAdd = async (title: string, description?: string) => {
+  const handleAdd = async (title: string, description?: string, category_id?: string) => {
     try {
-      await addTodo(title, description);
+      await addTodo(title, description, category_id);
       setIsAddModalOpen(false);
     } catch (error) {
       setError("할 일을 추가하는 중 오류가 발생했습니다.");
@@ -213,12 +214,13 @@ export default function TodoList() {
     setCopyingTodo({
       title: todo.title,
       description: todo.description,
+      category_id: todo.category_id,
     });
   };
 
-  const handleCopyConfirm = async (title: string, description?: string) => {
+  const handleCopyConfirm = async (title: string, description?: string, category_id?: string) => {
     try {
-      await addTodo(title, description);
+      await addTodo(title, description, category_id);
       setCopyingTodo(null);
     } catch (error) {
       setError("할 일을 복사하는 중 오류가 발생했습니다.");
@@ -327,8 +329,9 @@ export default function TodoList() {
             completed: false,
             created_at: new Date().toISOString(),
             user_id: user?.id || "",
+            category_id: copyingTodo.category_id,
           }}
-          onEdit={(_, title, description) => handleCopyConfirm(title, description)}
+          onEdit={(_, title, description) => handleCopyConfirm(title, description, copyingTodo.category_id)}
           isCopying={true}
         />
       )}
