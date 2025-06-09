@@ -31,7 +31,14 @@ interface TodoFormData {
 export default function EditTodoModal({ open, onClose, todo, onEdit, isCopying = false }: EditTodoModalProps) {
   const { isDarkMode } = useThemeStore();
   const { categories, fetchCategories } = useCategoryStore();
-  const { register, handleSubmit, reset, setValue, watch } = useForm<TodoFormData>({
+  const {
+    register,
+    handleSubmit,
+    reset,
+    setValue,
+    watch,
+    formState: { isSubmitting },
+  } = useForm<TodoFormData>({
     defaultValues: {
       title: todo.title,
       description: todo.description || "",
@@ -94,6 +101,7 @@ export default function EditTodoModal({ open, onClose, todo, onEdit, isCopying =
               {...register("title", { required: true })}
               className={isDarkMode ? "text-white" : ""}
               inputRef={inputRef}
+              disabled={isSubmitting}
               InputLabelProps={{
                 className: isDarkMode ? "text-gray-400" : "",
               }}
@@ -119,6 +127,7 @@ export default function EditTodoModal({ open, onClose, todo, onEdit, isCopying =
               onChange={(_, newValue) => {
                 setValue("category_id", newValue?.id);
               }}
+              disabled={isSubmitting}
               renderInput={(params) => (
                 <TextField
                   {...params}
@@ -151,6 +160,7 @@ export default function EditTodoModal({ open, onClose, todo, onEdit, isCopying =
               placeholder="설명 (선택사항)"
               {...register("description")}
               className={isDarkMode ? "text-white" : ""}
+              disabled={isSubmitting}
               sx={{
                 "& .MuiOutlinedInput-root": {
                   backgroundColor: isDarkMode ? "#2d2d2d" : "white",
@@ -169,11 +179,11 @@ export default function EditTodoModal({ open, onClose, todo, onEdit, isCopying =
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={onClose} variant="outlined">
+          <Button onClick={handleClose} variant="outlined" disabled={isSubmitting}>
             취소
           </Button>
-          <Button type="submit" variant="contained">
-            {isCopying ? "복사하기" : "수정하기"}
+          <Button type="submit" variant="contained" disabled={isSubmitting}>
+            {isSubmitting ? "저장 중..." : isCopying ? "복사하기" : "수정하기"}
           </Button>
         </DialogActions>
       </form>

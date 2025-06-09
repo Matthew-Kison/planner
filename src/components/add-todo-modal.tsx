@@ -19,7 +19,14 @@ interface TodoFormData {
 export default function AddTodoModal({ open, onClose, onAdd }: AddTodoModalProps) {
   const { isDarkMode } = useThemeStore();
   const { categories, fetchCategories } = useCategoryStore();
-  const { register, handleSubmit, reset, setValue, watch } = useForm<TodoFormData>();
+  const {
+    register,
+    handleSubmit,
+    reset,
+    setValue,
+    watch,
+    formState: { isSubmitting },
+  } = useForm<TodoFormData>();
   const inputRef = useRef<HTMLInputElement>(null);
   const selectedCategoryId = watch("category_id");
 
@@ -70,6 +77,7 @@ export default function AddTodoModal({ open, onClose, onAdd }: AddTodoModalProps
               {...register("title", { required: true })}
               className={isDarkMode ? "text-white" : ""}
               inputRef={inputRef}
+              disabled={isSubmitting}
               InputLabelProps={{
                 className: isDarkMode ? "text-gray-400" : "",
               }}
@@ -95,6 +103,7 @@ export default function AddTodoModal({ open, onClose, onAdd }: AddTodoModalProps
               onChange={(_, newValue) => {
                 setValue("category_id", newValue?.id);
               }}
+              disabled={isSubmitting}
               renderInput={(params) => (
                 <TextField
                   {...params}
@@ -127,6 +136,7 @@ export default function AddTodoModal({ open, onClose, onAdd }: AddTodoModalProps
               placeholder="설명 (선택사항)"
               {...register("description")}
               className={isDarkMode ? "text-white" : ""}
+              disabled={isSubmitting}
               sx={{
                 "& .MuiOutlinedInput-root": {
                   backgroundColor: isDarkMode ? "#2d2d2d" : "white",
@@ -145,11 +155,11 @@ export default function AddTodoModal({ open, onClose, onAdd }: AddTodoModalProps
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleClose} variant="outlined">
+          <Button onClick={handleClose} variant="outlined" disabled={isSubmitting}>
             취소
           </Button>
-          <Button type="submit" variant="contained">
-            추가
+          <Button type="submit" variant="contained" disabled={isSubmitting}>
+            {isSubmitting ? "저장 중..." : "추가"}
           </Button>
         </DialogActions>
       </form>

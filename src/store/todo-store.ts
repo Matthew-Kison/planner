@@ -51,6 +51,10 @@ export const useTodoStore = create<TodoStore>((set, get) => ({
     const { user } = useAuthStore.getState();
     if (!user) return;
 
+    const currentTodos = get().todos;
+    const maxOrder = currentTodos.length > 0 ? Math.max(...currentTodos.map((todo) => todo.order)) : -1;
+    const newOrder = maxOrder + 1;
+
     const newTodo = {
       id: crypto.randomUUID(),
       title,
@@ -59,7 +63,7 @@ export const useTodoStore = create<TodoStore>((set, get) => ({
       completed: false,
       created_at: new Date().toISOString(),
       user_id: user.id,
-      order: get().todos.length,
+      order: newOrder,
     };
 
     // Optimistic update
@@ -171,7 +175,13 @@ export const useTodoStore = create<TodoStore>((set, get) => ({
     try {
       const { error } = await supabase.from("todos").upsert(
         todos.map((todo, index) => ({
-          ...todo,
+          id: todo.id,
+          title: todo.title,
+          description: todo.description || null,
+          completed: todo.completed,
+          created_at: todo.created_at,
+          user_id: todo.user_id,
+          category_id: todo.category_id || null,
           order: index,
         }))
       );
