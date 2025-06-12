@@ -3,7 +3,8 @@
 import { useAuthStore } from "@/store/auth-store";
 import { useThemeStore } from "@/store/theme-store";
 import { useTodoStore } from "@/store/todo-store";
-import { Add as AddIcon, Delete as DeleteIcon, ExpandMore as ExpandMoreIcon, ContentCopy as CopyIcon } from "@mui/icons-material";
+import { useCategoryStore } from "@/store/category-store";
+import { Add as AddIcon, Delete as DeleteIcon, ExpandMore as ExpandMoreIcon, ContentCopy as CopyIcon, Category } from "@mui/icons-material";
 import {
   Accordion,
   AccordionDetails,
@@ -15,15 +16,17 @@ import {
   List,
   ListItem,
   ListItemText,
+  Stack,
   Tooltip,
   Typography,
 } from "@mui/material";
 import { differenceInDays, differenceInHours, differenceInMinutes } from "date-fns";
-import { useEffect, useRef, useState } from "react";
-import { useDrag, useDrop } from "react-dnd";
+import { useEffect, useState, useRef } from "react";
 import AddTodoModal from "./add-todo-modal";
 import DeleteConfirmDialog from "./delete-confirm-dialog";
 import EditTodoModal from "./edit-todo-modal";
+import AddCategoryModal from "./add-category-modal";
+import { useDrag, useDrop } from "react-dnd";
 
 interface TodoItemProps {
   todo: {
@@ -45,6 +48,9 @@ interface TodoItemProps {
 function TodoItem({ todo, onToggle, onEdit, onDelete, onMove, onCopy }: TodoItemProps) {
   const ref = useRef<HTMLDivElement>(null);
   const { isDarkMode } = useThemeStore();
+  const { categories } = useCategoryStore();
+
+  const category = todo.category_id ? categories.find((c) => c.id === todo.category_id) : null;
 
   const getRelativeTime = (dateString: string) => {
     const date = new Date(dateString);
@@ -65,15 +71,17 @@ function TodoItem({ todo, onToggle, onEdit, onDelete, onMove, onCopy }: TodoItem
     collect: (monitor) => ({
       isDragging: monitor.isDragging(),
     }),
+    canDrag: !todo.completed,
   });
 
   const [, drop] = useDrop({
     accept: "TODO",
     drop: (item: { id: string }) => {
-      if (item.id !== todo.id) {
+      if (item.id !== todo.id && !todo.completed) {
         onMove(item.id, todo.id);
       }
     },
+    canDrop: () => !todo.completed,
   });
 
   drag(drop(ref));
@@ -135,6 +143,7 @@ function TodoItem({ todo, onToggle, onEdit, onDelete, onMove, onCopy }: TodoItem
                   <Tooltip title={todo.description} placement="right">
                     <span className={`${todo.completed ? "line-through text-gray-500" : ""} font-semibold`}>{todo.title}</span>
                   </Tooltip>
+                  {category?.thumbnail && <img src={category.thumbnail} alt={category.name} className="w-10 h-10 rounded-full object-cover" />}
                   <span className="text-sm text-gray-500">{getRelativeTime(todo.created_at)}</span>
                 </div>
               }
@@ -148,28 +157,25 @@ function TodoItem({ todo, onToggle, onEdit, onDelete, onMove, onCopy }: TodoItem
 
 export default function TodoList() {
   const { todos, toggleTodo, deleteTodo, reorderTodos, fetchTodos, isLoading, addTodo, updateTodo } = useTodoStore();
+  const { addCategory, fetchCategories } = useCategoryStore();
   const { isDarkMode } = useThemeStore();
   const { user } = useAuthStore();
   const [editingTodo, setEditingTodo] = useState<string | null>(null);
   const [deletingTodo, setDeletingTodo] = useState<string | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isAddCategoryModalOpen, setIsAddCategoryModalOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copyingTodo, setCopyingTodo] = useState<{ title: string; description?: string; category_id?: string } | null>(null);
 
   useEffect(() => {
     if (user) {
       fetchTodos();
+      fetchCategories();
     }
-  }, [user, fetchTodos]);
+  }, [user, fetchTodos, fetchCategories]);
 
   const planTodos = todos.filter((todo) => !todo.completed);
-  const doneTodos = todos.filter((todo) => todo.completed);
-
-  const moveTodo = (dragId: string, hoverId: string) => {
-    const dragIndex = todos.findIndex((todo) => todo.id === dragId);
-    const hoverIndex = todos.findIndex((todo) => todo.id === hoverId);
-    reorderTodos(dragIndex, hoverIndex);
-  };
+  const doneTodos = todos.filter((todo) => todo.completed).sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
 
   const handleDelete = async (id: string) => {
     try {
@@ -228,6 +234,24 @@ export default function TodoList() {
     }
   };
 
+  const handleAddCategory = async (name: string) => {
+    try {
+      await addCategory(name);
+      setIsAddCategoryModalOpen(false);
+    } catch (error) {
+      setError("카테고리를 추가하는 중 오류가 발생했습니다.");
+      console.error(error);
+    }
+  };
+
+  const moveTodo = (dragId: string, hoverId: string) => {
+    const dragIndex = todos.findIndex((todo) => todo.id === dragId);
+    const hoverIndex = todos.findIndex((todo) => todo.id === hoverId);
+    if (dragIndex !== -1 && hoverIndex !== -1) {
+      reorderTodos(dragIndex, hoverIndex);
+    }
+  };
+
   if (isLoading) {
     return <div className="flex justify-center items-center h-64">Loading...</div>;
   }
@@ -248,20 +272,36 @@ export default function TodoList() {
         <Typography variant="h4" component="div" className={isDarkMode ? "text-white" : ""}>
           Todo List
         </Typography>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => setIsAddModalOpen(true)}
-          sx={{
-            backgroundColor: "#1976d2",
-            color: "white",
-            "&:hover": {
-              backgroundColor: "#1565c0",
-            },
-          }}
-        >
-          추가
-        </Button>
+        <Stack direction={"row"} gap={2}>
+          <Button
+            variant="contained"
+            startIcon={<Category />}
+            onClick={() => setIsAddCategoryModalOpen(true)}
+            sx={{
+              backgroundColor: "#1976d2",
+              color: "white",
+              "&:hover": {
+                backgroundColor: "#1565c0",
+              },
+            }}
+          >
+            카테고리 추가
+          </Button>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => setIsAddModalOpen(true)}
+            sx={{
+              backgroundColor: "#1976d2",
+              color: "white",
+              "&:hover": {
+                backgroundColor: "#1565c0",
+              },
+            }}
+          >
+            추가
+          </Button>
+        </Stack>
       </Box>
 
       <Accordion defaultExpanded>
@@ -287,7 +327,7 @@ export default function TodoList() {
         </AccordionDetails>
       </Accordion>
 
-      <Accordion defaultExpanded>
+      <Accordion defaultExpanded={false}>
         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
           <Typography variant="h5" fontWeight={600} className="text-green-500">
             Done ({doneTodos.length})
@@ -335,6 +375,8 @@ export default function TodoList() {
           isCopying={true}
         />
       )}
+
+      <AddCategoryModal open={isAddCategoryModalOpen} onClose={() => setIsAddCategoryModalOpen(false)} onAdd={handleAddCategory} />
     </div>
   );
 }

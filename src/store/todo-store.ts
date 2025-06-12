@@ -8,6 +8,7 @@ export interface Todo {
   description?: string;
   completed: boolean;
   created_at: string;
+  updated_at: string;
   user_id: string;
   category_id?: string;
   order: number;
@@ -54,6 +55,7 @@ export const useTodoStore = create<TodoStore>((set, get) => ({
     const currentTodos = get().todos;
     const maxOrder = currentTodos.length > 0 ? Math.max(...currentTodos.map((todo) => todo.order)) : -1;
     const newOrder = maxOrder + 1;
+    const now = new Date().toISOString();
 
     const newTodo = {
       id: crypto.randomUUID(),
@@ -61,7 +63,8 @@ export const useTodoStore = create<TodoStore>((set, get) => ({
       description,
       category_id,
       completed: false,
-      created_at: new Date().toISOString(),
+      created_at: now,
+      updated_at: now,
       user_id: user.id,
       order: newOrder,
     };
@@ -142,14 +145,23 @@ export const useTodoStore = create<TodoStore>((set, get) => ({
     const originalTodo = get().todos.find((t) => t.id === id);
     if (!originalTodo) return;
 
+    const now = new Date().toISOString();
+
     // Optimistic update
     set((state) => ({
-      todos: state.todos.map((todo) => (todo.id === id ? { ...todo, completed: !todo.completed } : todo)),
+      todos: state.todos.map((todo) => (todo.id === id ? { ...todo, completed: !todo.completed, updated_at: now } : todo)),
     }));
 
     try {
       // 서버에 보낼 때는 원래 상태의 반전된 값을 사용
-      const { error } = await supabase.from("todos").update({ completed: !originalTodo.completed }).eq("id", id).eq("user_id", user.id);
+      const { error } = await supabase
+        .from("todos")
+        .update({
+          completed: !originalTodo.completed,
+          updated_at: now,
+        })
+        .eq("id", id)
+        .eq("user_id", user.id);
 
       if (error) throw error;
     } catch (error) {
@@ -180,6 +192,7 @@ export const useTodoStore = create<TodoStore>((set, get) => ({
           description: todo.description || null,
           completed: todo.completed,
           created_at: todo.created_at,
+          updated_at: todo.updated_at,
           user_id: todo.user_id,
           category_id: todo.category_id || null,
           order: index,

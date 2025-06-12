@@ -1,13 +1,12 @@
 import { create } from "zustand";
 import { supabase } from "@/lib/supabase";
 
-export interface Category {
+interface Category {
   id: string;
   name: string;
-  description?: string;
-  thumbnail?: string;
+  user_id: string;
   created_at: string;
-  updated_at: string;
+  thumbnail?: string;
 }
 
 interface CategoryStore {
@@ -15,23 +14,110 @@ interface CategoryStore {
   isLoading: boolean;
   error: string | null;
   fetchCategories: () => Promise<void>;
+  addCategory: (name: string, thumbnail?: File) => Promise<void>;
+  updateCategory: (id: string, name: string, thumbnail?: File) => Promise<void>;
+  deleteCategory: (id: string) => Promise<void>;
 }
 
 export const useCategoryStore = create<CategoryStore>((set) => ({
   categories: [],
   isLoading: false,
   error: null,
+
   fetchCategories: async () => {
+    set({ isLoading: true, error: null });
     try {
-      set({ isLoading: true, error: null });
-      const { data, error } = await supabase.from("categories").select("*").order("name");
+      const { data, error } = await supabase.from("categories").select("*").order("created_at", { ascending: true });
+      if (error) throw error;
+      set({ categories: data || [] });
+    } catch (error) {
+      set({ error: (error as Error).message });
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+
+  addCategory: async (name: string, thumbnail?: File) => {
+    set({ isLoading: true, error: null });
+    try {
+      let thumbnailUrl: string | undefined;
+
+      if (thumbnail) {
+        const fileExt = thumbnail.name.split(".").pop();
+        const fileName = `${Math.random()}.${fileExt}`;
+        const { error: uploadError } = await supabase.storage.from("category-thumbnails").upload(fileName, thumbnail);
+
+        if (uploadError) throw uploadError;
+
+        const {
+          data: { publicUrl },
+        } = supabase.storage.from("category-thumbnails").getPublicUrl(fileName);
+
+        thumbnailUrl = publicUrl;
+      }
+
+      const { data, error } = await supabase
+        .from("categories")
+        .insert([{ name, thumbnail: thumbnailUrl }])
+        .select()
+        .single();
 
       if (error) throw error;
-
-      set({ categories: data || [], isLoading: false });
+      set((state) => ({ categories: [...state.categories, data] }));
     } catch (error) {
-      console.error("Error fetching categories:", error);
-      set({ error: "카테고리를 불러오는 중 오류가 발생했습니다.", isLoading: false });
+      set({ error: (error as Error).message });
+      throw error;
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+
+  updateCategory: async (id: string, name: string, thumbnail?: File) => {
+    set({ isLoading: true, error: null });
+    try {
+      let thumbnailUrl: string | undefined;
+
+      if (thumbnail) {
+        const fileExt = thumbnail.name.split(".").pop();
+        const fileName = `${Math.random()}.${fileExt}`;
+        const { error: uploadError } = await supabase.storage.from("category-thumbnails").upload(fileName, thumbnail);
+
+        if (uploadError) throw uploadError;
+
+        const {
+          data: { publicUrl },
+        } = supabase.storage.from("category-thumbnails").getPublicUrl(fileName);
+
+        thumbnailUrl = publicUrl;
+      }
+
+      const { data, error } = await supabase.from("categories").update({ name, thumbnail: thumbnailUrl }).eq("id", id).select().single();
+
+      if (error) throw error;
+      set((state) => ({
+        categories: state.categories.map((category) => (category.id === id ? data : category)),
+      }));
+    } catch (error) {
+      set({ error: (error as Error).message });
+      throw error;
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+
+  deleteCategory: async (id: string) => {
+    set({ isLoading: true, error: null });
+    try {
+      const { error } = await supabase.from("categories").delete().eq("id", id);
+      if (error) throw error;
+      set((state) => ({
+        categories: state.categories.filter((category) => category.id !== id),
+      }));
+    } catch (error) {
+      set({ error: (error as Error).message });
+      throw error;
+    } finally {
+      set({ isLoading: false });
     }
   },
 }));
