@@ -63,7 +63,7 @@ export default function AddTodoModal({ open, onClose, onAdd }: AddTodoModalProps
       sx={{
         "& .MuiDialog-paper": {
           width: "100%",
-          maxWidth: "400px",
+          maxWidth: "800px",
         },
       }}
     >
@@ -133,6 +133,7 @@ export default function AddTodoModal({ open, onClose, onAdd }: AddTodoModalProps
               fullWidth
               multiline
               minRows={4}
+              maxRows={8}
               placeholder="설명 (선택사항)"
               {...register("description")}
               className={isDarkMode ? "text-white" : ""}

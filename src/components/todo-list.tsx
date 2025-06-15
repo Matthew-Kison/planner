@@ -5,6 +5,7 @@ import { useThemeStore } from "@/store/theme-store";
 import { useTodoStore } from "@/store/todo-store";
 import { useCategoryStore } from "@/store/category-store";
 import { Add as AddIcon, Delete as DeleteIcon, ExpandMore as ExpandMoreIcon, ContentCopy as CopyIcon, Category } from "@mui/icons-material";
+import Image from "next/image";
 import {
   Accordion,
   AccordionDetails,
@@ -36,7 +37,7 @@ interface TodoItemProps {
     completed: boolean;
     created_at: string;
     user_id: string;
-    category_id?: string;
+    category_id?: string | null;
   };
   onToggle: (id: string) => void;
   onEdit: (id: string) => void;
@@ -140,10 +141,24 @@ function TodoItem({ todo, onToggle, onEdit, onDelete, onMove, onCopy }: TodoItem
             <ListItemText
               primary={
                 <div className="flex items-center gap-2">
+                  {category ? (
+                    category.thumbnail ? (
+                      <Image
+                        src={category.thumbnail}
+                        alt={category.name}
+                        width={24}
+                        height={24}
+                        className="rounded-full object-cover border border-gray-300"
+                      />
+                    ) : (
+                      <div className="w-6 h-6 rounded-full bg-gray-700 flex items-center justify-center text-white text-sm font-medium">
+                        {category.name.charAt(0)}
+                      </div>
+                    )
+                  ) : null}
                   <Tooltip title={todo.description} placement="right">
                     <span className={`${todo.completed ? "line-through text-gray-500" : ""} font-semibold`}>{todo.title}</span>
                   </Tooltip>
-                  {category?.thumbnail && <img src={category.thumbnail} alt={category.name} className="w-10 h-10 rounded-full object-cover" />}
                   <span className="text-sm text-gray-500">{getRelativeTime(todo.created_at)}</span>
                 </div>
               }
@@ -165,7 +180,7 @@ export default function TodoList() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isAddCategoryModalOpen, setIsAddCategoryModalOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [copyingTodo, setCopyingTodo] = useState<{ title: string; description?: string; category_id?: string } | null>(null);
+  const [copyingTodo, setCopyingTodo] = useState<{ title: string; description?: string; category_id?: string | null } | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -196,7 +211,7 @@ export default function TodoList() {
     }
   };
 
-  const handleEdit = async (id: string, title: string, description?: string, category_id?: string) => {
+  const handleEdit = async (id: string, title: string, description?: string, category_id?: string | null) => {
     try {
       await updateTodo(id, title, description, category_id);
       setEditingTodo(null);
@@ -220,11 +235,11 @@ export default function TodoList() {
     setCopyingTodo({
       title: todo.title,
       description: todo.description,
-      category_id: todo.category_id,
+      category_id: todo.category_id || null,
     });
   };
 
-  const handleCopyConfirm = async (title: string, description?: string, category_id?: string) => {
+  const handleCopyConfirm = async (title: string, description?: string, category_id?: string | null) => {
     try {
       await addTodo(title, description, category_id);
       setCopyingTodo(null);
@@ -234,13 +249,12 @@ export default function TodoList() {
     }
   };
 
-  const handleAddCategory = async (name: string) => {
+  const handleAddCategory = async (name: string, thumbnail?: File) => {
     try {
-      await addCategory(name);
+      await addCategory(name, thumbnail);
       setIsAddCategoryModalOpen(false);
     } catch (error) {
-      setError("카테고리를 추가하는 중 오류가 발생했습니다.");
-      console.error(error);
+      console.error("Error adding category:", error);
     }
   };
 

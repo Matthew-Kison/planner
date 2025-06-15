@@ -45,9 +45,16 @@ export const useCategoryStore = create<CategoryStore>((set) => ({
       if (thumbnail) {
         const fileExt = thumbnail.name.split(".").pop();
         const fileName = `${Math.random()}.${fileExt}`;
-        const { error: uploadError } = await supabase.storage.from("category-thumbnails").upload(fileName, thumbnail);
 
-        if (uploadError) throw uploadError;
+        const { error: uploadError } = await supabase.storage.from("category-thumbnails").upload(fileName, thumbnail, {
+          cacheControl: "3600",
+          upsert: false,
+        });
+
+        if (uploadError) {
+          console.error("Upload error:", uploadError);
+          throw uploadError;
+        }
 
         const {
           data: { publicUrl },
@@ -65,6 +72,7 @@ export const useCategoryStore = create<CategoryStore>((set) => ({
       if (error) throw error;
       set((state) => ({ categories: [...state.categories, data] }));
     } catch (error) {
+      console.error("Category error:", error);
       set({ error: (error as Error).message });
       throw error;
     } finally {

@@ -16,16 +16,16 @@ interface EditTodoModalProps {
     completed: boolean;
     created_at: string;
     user_id: string;
-    category_id?: string;
+    category_id?: string | null;
   };
-  onEdit: (id: string, title: string, description?: string, category_id?: string) => void;
+  onEdit: (id: string, title: string, description?: string, category_id?: string | null) => void;
   isCopying?: boolean;
 }
 
 interface TodoFormData {
   title: string;
   description?: string;
-  category_id?: string;
+  category_id?: string | null;
 }
 
 export default function EditTodoModal({ open, onClose, todo, onEdit, isCopying = false }: EditTodoModalProps) {
@@ -87,7 +87,7 @@ export default function EditTodoModal({ open, onClose, todo, onEdit, isCopying =
       sx={{
         "& .MuiDialog-paper": {
           width: "100%",
-          maxWidth: "400px",
+          maxWidth: "800px",
         },
       }}
     >
@@ -157,6 +157,7 @@ export default function EditTodoModal({ open, onClose, todo, onEdit, isCopying =
               fullWidth
               multiline
               minRows={4}
+              maxRows={8}
               placeholder="설명 (선택사항)"
               {...register("description")}
               className={isDarkMode ? "text-white" : ""}

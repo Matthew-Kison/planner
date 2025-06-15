@@ -10,7 +10,7 @@ export interface Todo {
   created_at: string;
   updated_at: string;
   user_id: string;
-  category_id?: string;
+  category_id?: string | null;
   order: number;
 }
 
@@ -19,8 +19,8 @@ interface TodoStore {
   isLoading: boolean;
   error: string | null;
   fetchTodos: () => Promise<void>;
-  addTodo: (title: string, description?: string, category_id?: string) => Promise<void>;
-  updateTodo: (id: string, title: string, description?: string, category_id?: string) => Promise<void>;
+  addTodo: (title: string, description?: string, category_id?: string | null) => Promise<void>;
+  updateTodo: (id: string, title: string, description?: string, category_id?: string | null) => Promise<void>;
   deleteTodo: (id: string) => Promise<void>;
   toggleTodo: (id: string) => Promise<void>;
   reorderTodos: (dragIndex: number, hoverIndex: number) => Promise<void>;
@@ -37,7 +37,7 @@ export const useTodoStore = create<TodoStore>((set, get) => ({
 
     set({ isLoading: true });
     try {
-      const { data, error } = await supabase.from("todos").select("*").eq("user_id", user.id).order("order", { ascending: true });
+      const { data, error } = await supabase.from("todos").select("*").eq("user_id", user.id).order("order", { ascending: false });
 
       if (error) throw error;
       set({ todos: data || [] });
@@ -48,7 +48,7 @@ export const useTodoStore = create<TodoStore>((set, get) => ({
     }
   },
 
-  addTodo: async (title: string, description?: string, category_id?: string) => {
+  addTodo: async (title: string, description?: string, category_id?: string | null) => {
     const { user } = useAuthStore.getState();
     if (!user) return;
 
@@ -87,17 +87,25 @@ export const useTodoStore = create<TodoStore>((set, get) => ({
     }
   },
 
-  updateTodo: async (id: string, title: string, description?: string, category_id?: string) => {
+  updateTodo: async (id: string, title: string, description?: string, category_id?: string | null) => {
     const { user } = useAuthStore.getState();
     if (!user) return;
 
     // Optimistic update
     set((state) => ({
-      todos: state.todos.map((todo) => (todo.id === id ? { ...todo, title, description, category_id } : todo)),
+      todos: state.todos.map((todo) => (todo.id === id ? { ...todo, title, description, category_id: category_id || null } : todo)),
     }));
 
     try {
-      const { error } = await supabase.from("todos").update({ title, description, category_id }).eq("id", id).eq("user_id", user.id);
+      const { error } = await supabase
+        .from("todos")
+        .update({
+          title,
+          description,
+          category_id: category_id || null,
+        })
+        .eq("id", id)
+        .eq("user_id", user.id);
 
       if (error) throw error;
     } catch (error) {
@@ -181,12 +189,18 @@ export const useTodoStore = create<TodoStore>((set, get) => ({
     const [draggedTodo] = todos.splice(dragIndex, 1);
     todos.splice(hoverIndex, 0, draggedTodo);
 
+    // Update order values
+    const updatedTodos = todos.map((todo, index) => ({
+      ...todo,
+      order: todos.length - index - 1, // 높은 order가 위로 가도록
+    }));
+
     // Optimistic update
-    set({ todos });
+    set({ todos: updatedTodos });
 
     try {
       const { error } = await supabase.from("todos").upsert(
-        todos.map((todo, index) => ({
+        updatedTodos.map((todo) => ({
           id: todo.id,
           title: todo.title,
           description: todo.description || null,
@@ -195,7 +209,7 @@ export const useTodoStore = create<TodoStore>((set, get) => ({
           updated_at: todo.updated_at,
           user_id: todo.user_id,
           category_id: todo.category_id || null,
-          order: index,
+          order: todo.order,
         }))
       );
 
