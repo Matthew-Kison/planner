@@ -52,7 +52,11 @@ export default function AddTodoModal({ open, onClose, onAdd }: AddTodoModalProps
   return (
     <Dialog
       open={open}
-      onClose={handleClose}
+      onKeyDown={(e) => {
+        if (e.key === "Escape") {
+          handleClose();
+        }
+      }}
       slotProps={{
         backdrop: {
           onTransitionEnd: () => {

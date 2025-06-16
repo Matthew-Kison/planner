@@ -189,6 +189,19 @@ export default function TodoList() {
     }
   }, [user, fetchTodos, fetchCategories]);
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "/") {
+        setIsAddModalOpen(true);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
+
   const planTodos = todos.filter((todo) => !todo.completed);
   const doneTodos = todos.filter((todo) => todo.completed).sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
 

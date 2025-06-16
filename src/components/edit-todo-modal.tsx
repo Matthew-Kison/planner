@@ -76,7 +76,11 @@ export default function EditTodoModal({ open, onClose, todo, onEdit, isCopying =
   return (
     <Dialog
       open={open}
-      onClose={handleClose}
+      onKeyDown={(e) => {
+        if (e.key === "Escape") {
+          handleClose();
+        }
+      }}
       slotProps={{
         backdrop: {
           onTransitionEnd: () => {
